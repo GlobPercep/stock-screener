@@ -352,7 +352,8 @@ def fetch_stocks(tickers: tuple) -> pd.DataFrame:
                 "52w Low": info.get("fiftyTwoWeekLow"),
                 "Beta": info.get("beta"),
             })
-        except Exception:
+        except Exception as e:
+            st.toast(f"Error fetching {t}: {e}")
             continue
     df = pd.DataFrame(rows)
     if not df.empty:
