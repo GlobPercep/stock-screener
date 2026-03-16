@@ -202,7 +202,9 @@ st.html(
         border-radius: 14px !important;
         color: #f1f5f9 !important;
         min-height: 54px !important;
-        padding-right: 48px !important;
+        padding-right: 52px !important;
+        position: relative !important;
+        flex-wrap: wrap !important;
     }
     div[data-baseweb="select"] > div > div:last-child {
         position: absolute !important;
@@ -210,9 +212,11 @@ st.html(
         top: 50% !important;
         transform: translateY(-50%) !important;
         width: 24px !important;
+        flex-shrink: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        z-index: 2 !important;
     }
     div[data-baseweb="select"] > div > div:last-child svg {
         fill: #94a3b8 !important;
@@ -221,9 +225,12 @@ st.html(
     div[data-baseweb="select"] > div > div:first-child {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        max-width: calc(100% - 48px) !important;
+        white-space: normal !important;
+        max-width: calc(100% - 52px) !important;
         color: #f1f5f9 !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
     }
     ul[data-baseweb="menu"] {
         background: #12121f !important;
