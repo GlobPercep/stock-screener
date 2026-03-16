@@ -195,42 +195,10 @@ st.html(
 
     /* ═══ SELECTBOX & MULTISELECT ═══ */
     div[data-baseweb="select"] > div {
-        font-family: 'Courier New', Courier, monospace !important;
-        font-size: 1.05rem !important;
         background: rgba(255,255,255,0.03) !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
         border-radius: 14px !important;
         color: #f1f5f9 !important;
-        min-height: 54px !important;
-        padding-right: 52px !important;
-        position: relative !important;
-        flex-wrap: wrap !important;
-    }
-    div[data-baseweb="select"] > div > div:last-child {
-        position: absolute !important;
-        right: 14px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        width: 24px !important;
-        flex-shrink: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 2 !important;
-    }
-    div[data-baseweb="select"] > div > div:last-child svg {
-        fill: #94a3b8 !important;
-        width: 18px !important; height: 18px !important;
-    }
-    div[data-baseweb="select"] > div > div:first-child {
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: normal !important;
-        max-width: calc(100% - 52px) !important;
-        color: #f1f5f9 !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 4px !important;
     }
     ul[data-baseweb="menu"] {
         background: #12121f !important;
@@ -238,7 +206,6 @@ st.html(
         border-radius: 14px !important;
     }
     ul[data-baseweb="menu"] li {
-        font-size: 1.05rem !important; padding: 14px 18px !important;
         color: #e2e8f0 !important;
     }
     ul[data-baseweb="menu"] li:hover { background: rgba(99,102,241,0.12) !important; }
@@ -247,8 +214,7 @@ st.html(
     span[data-baseweb="tag"] {
         background: rgba(99,102,241,0.15) !important;
         border: 1px solid rgba(99,102,241,0.25) !important;
-        border-radius: 10px !important; color: #c7d2fe !important;
-        font-size: 0.95rem !important;
+        border-radius: 8px !important; color: #c7d2fe !important;
     }
 
     /* ═══ RADIO ═══ */
