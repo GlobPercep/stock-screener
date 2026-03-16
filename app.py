@@ -15,128 +15,137 @@ st.set_page_config(
 )
 
 # ── Premium CSS ──────────────────────────────────────────────────────────────
-st.markdown(
+st.html(
     """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
     /* ═══ RESET & BASE ═══ */
     *, *::before, *::after { box-sizing: border-box; }
-    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    html { font-size: 18px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     .stApp {
-        background: linear-gradient(160deg, #0f0f1a 0%, #1a1a2e 40%, #16213e 100%);
+        background: linear-gradient(160deg, #08080f 0%, #0d0d1a 40%, #0f1525 100%);
         color: #e2e8f0;
-        font-family: 'Space Grotesk', sans-serif !important;
+        font-family: 'Courier New', Courier, monospace !important;
     }
     header[data-testid="stHeader"] { background: transparent !important; }
-    .block-container { padding: 1.2rem 2rem 2rem; max-width: 1400px; }
+    .block-container { padding: 1.5rem 2.5rem 2.5rem; max-width: 1440px; }
+
+    /* ═══ GLOBAL FONT OVERRIDE ═══ */
+    p, span, label, div, li, td, th, input, textarea, select, button, a {
+        font-family: 'Courier New', Courier, monospace !important;
+    }
 
     /* ═══ MOBILE ═══ */
     @media (max-width: 768px) {
-        html { font-size: 14px; }
-        .block-container { padding: 0.8rem 1rem 1.5rem; }
+        html { font-size: 15px; }
+        .block-container { padding: 1rem 1.2rem 1.5rem; }
         .brand-bar { flex-direction: column; gap: 8px !important; }
         .hero-row { flex-direction: column !important; gap: 6px !important; }
     }
 
     /* ═══ BRAND BAR ═══ */
     .brand-bar {
-        display: flex; align-items: center; gap: 16px;
-        padding: 1rem 0 0.8rem; margin-bottom: 0.6rem;
+        display: flex; align-items: center; gap: 18px;
+        padding: 1.2rem 0 1rem; margin-bottom: 0.8rem;
     }
     .brand-icon {
-        width: 42px; height: 42px; border-radius: 12px;
+        width: 48px; height: 48px; border-radius: 14px;
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.3rem; color: white; flex-shrink: 0;
+        font-size: 1.5rem; color: white; flex-shrink: 0;
+        box-shadow: 0 4px 20px rgba(99,102,241,0.25);
     }
     .brand-name {
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 1.8rem; font-weight: 700; letter-spacing: -1px;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 2.2rem; font-weight: 700; letter-spacing: -1px;
         background: linear-gradient(135deg, #a5b4fc, #c4b5fd, #f0abfc);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .brand-tag {
-        font-size: 0.8rem; color: #64748b;
-        background: rgba(99,102,241,0.1); padding: 4px 12px;
-        border-radius: 20px; border: 1px solid rgba(99,102,241,0.2);
+        font-size: 0.9rem; color: #64748b;
+        background: rgba(99,102,241,0.08); padding: 6px 14px;
+        border-radius: 20px; border: 1px solid rgba(99,102,241,0.15);
     }
 
     /* ═══ GLASS CARD ═══ */
     .glass {
-        background: rgba(255,255,255,0.04);
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px; padding: 20px;
-        margin-bottom: 12px;
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px; padding: 24px;
+        margin-bottom: 14px;
     }
 
     /* ═══ NAVIGATION ═══ */
     .nav-bar {
         display: flex; gap: 4px;
-        background: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.04);
         border-radius: 14px; padding: 5px;
-        border: 1px solid rgba(255,255,255,0.06);
-        margin-bottom: 1.2rem; width: fit-content;
+        border: 1px solid rgba(255,255,255,0.05);
+        margin-bottom: 1.4rem; width: fit-content;
     }
     .nav-btn {
-        padding: 10px 24px; border-radius: 10px;
-        font-size: 0.95rem; font-weight: 600;
+        padding: 12px 28px; border-radius: 10px;
+        font-size: 1.05rem; font-weight: 700;
         color: #94a3b8; cursor: pointer;
         text-decoration: none; transition: all 0.2s;
         border: none; background: transparent;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: 'Courier New', Courier, monospace;
     }
-    .nav-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+    .nav-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
     .nav-btn.active {
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        color: white; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
     }
 
     /* ═══ STREAMLIT METRIC OVERRIDE ═══ */
     div[data-testid="stMetric"] {
-        background: rgba(255,255,255,0.04) !important;
-        backdrop-filter: blur(20px);
-        border-radius: 14px !important; padding: 20px 22px !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
+        background: rgba(255,255,255,0.03) !important;
+        backdrop-filter: blur(24px);
+        border-radius: 16px !important; padding: 24px 26px !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        transition: border-color 0.2s;
+    }
+    div[data-testid="stMetric"]:hover {
+        border-color: rgba(99,102,241,0.2) !important;
     }
     div[data-testid="stMetric"] label {
-        color: #64748b !important; font-size: 0.75rem !important;
-        text-transform: uppercase; letter-spacing: 1.2px;
-        font-weight: 600 !important;
-        font-family: 'JetBrains Mono', monospace !important;
+        color: #64748b !important; font-size: 0.85rem !important;
+        text-transform: uppercase; letter-spacing: 1.5px;
+        font-weight: 700 !important;
+        font-family: 'Courier New', Courier, monospace !important;
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
         color: #f1f5f9 !important; font-weight: 700 !important;
-        font-size: 1.4rem !important;
-        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 1.7rem !important;
+        font-family: 'Courier New', Courier, monospace !important;
     }
 
     /* ═══ STOCK CARDS ═══ */
     .stock-card {
-        background: rgba(255,255,255,0.04);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px; padding: 22px; margin-bottom: 12px;
-        transition: transform 0.15s, box-shadow 0.15s;
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(24px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px; padding: 26px; margin-bottom: 14px;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
     .stock-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        border-color: rgba(99,102,241,0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.4);
+        border-color: rgba(99,102,241,0.25);
     }
     .stock-card .ticker {
-        font-family: 'JetBrains Mono', monospace; font-size: 1.2rem;
+        font-family: 'Courier New', Courier, monospace; font-size: 1.4rem;
         font-weight: 700; color: #f1f5f9;
     }
-    .stock-card .name { color: #64748b; font-size: 0.82rem; margin: 4px 0 14px; }
+    .stock-card .name { color: #64748b; font-size: 0.95rem; margin: 6px 0 16px; }
     .stock-card .price {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.6rem; font-weight: 700; color: #f1f5f9;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.9rem; font-weight: 700; color: #f1f5f9;
     }
     .stock-card .change {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.95rem; font-weight: 600; margin-top: 6px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.1rem; font-weight: 700; margin-top: 8px;
     }
     .change-up { color: #4ade80; }
     .change-down { color: #f87171; }
@@ -144,21 +153,21 @@ st.markdown(
     /* ═══ HERO (CHART PAGE) ═══ */
     .hero-row {
         display: flex; flex-wrap: wrap; align-items: baseline;
-        gap: 14px; margin-bottom: 20px;
+        gap: 16px; margin-bottom: 24px;
     }
     .hero-ticker {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 2.2rem; font-weight: 700; color: #f1f5f9;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 2.6rem; font-weight: 700; color: #f1f5f9;
     }
-    .hero-name { color: #64748b; font-size: 1rem; }
+    .hero-name { color: #64748b; font-size: 1.15rem; }
     .hero-price {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.8rem; font-weight: 700; color: #f1f5f9;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 2.1rem; font-weight: 700; color: #f1f5f9;
     }
     .hero-change {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem; font-weight: 700;
-        padding: 4px 12px; border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.25rem; font-weight: 700;
+        padding: 6px 14px; border-radius: 10px;
     }
     .hero-change.change-up { background: rgba(74,222,128,0.1); }
     .hero-change.change-down { background: rgba(248,113,113,0.1); }
@@ -166,38 +175,38 @@ st.markdown(
     /* ═══ INPUTS ═══ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 1rem !important;
-        padding: 14px 16px !important;
-        border-radius: 12px !important;
-        border: 2px solid rgba(255,255,255,0.1) !important;
-        background: rgba(255,255,255,0.05) !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 1.1rem !important;
+        padding: 16px 18px !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        background: rgba(255,255,255,0.03) !important;
         color: #f1f5f9 !important;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
         border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
     }
     .stTextInput > div > div > input::placeholder {
-        color: #4b5563 !important; font-size: 0.9rem !important;
+        color: #4b5563 !important; font-size: 1rem !important;
     }
 
-    /* ═══ SELECTBOX & MULTISELECT — no overlap ═══ */
+    /* ═══ SELECTBOX & MULTISELECT ═══ */
     div[data-baseweb="select"] > div {
-        font-family: 'Space Grotesk', sans-serif !important;
-        font-size: 0.95rem !important;
-        background: rgba(255,255,255,0.05) !important;
-        border: 2px solid rgba(255,255,255,0.1) !important;
-        border-radius: 12px !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 1.05rem !important;
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 14px !important;
         color: #f1f5f9 !important;
-        min-height: 50px !important;
+        min-height: 54px !important;
         padding-right: 48px !important;
     }
-    /* Dropdown arrow — fixed right with clear spacing */
     div[data-baseweb="select"] > div > div:last-child {
         position: absolute !important;
-        right: 12px !important;
+        right: 14px !important;
         top: 50% !important;
         transform: translateY(-50%) !important;
         width: 24px !important;
@@ -209,7 +218,6 @@ st.markdown(
         fill: #94a3b8 !important;
         width: 18px !important; height: 18px !important;
     }
-    /* Value text — clip before arrow */
     div[data-baseweb="select"] > div > div:first-child {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
@@ -217,71 +225,71 @@ st.markdown(
         max-width: calc(100% - 48px) !important;
         color: #f1f5f9 !important;
     }
-    /* Dropdown menu */
     ul[data-baseweb="menu"] {
-        background: #1e1e32 !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        border-radius: 12px !important;
+        background: #12121f !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 14px !important;
     }
     ul[data-baseweb="menu"] li {
-        font-size: 0.95rem !important; padding: 12px 16px !important;
+        font-size: 1.05rem !important; padding: 14px 18px !important;
         color: #e2e8f0 !important;
     }
-    ul[data-baseweb="menu"] li:hover { background: rgba(99,102,241,0.15) !important; }
+    ul[data-baseweb="menu"] li:hover { background: rgba(99,102,241,0.12) !important; }
 
     /* Multiselect tags */
     span[data-baseweb="tag"] {
-        background: rgba(99,102,241,0.2) !important;
-        border: 1px solid rgba(99,102,241,0.3) !important;
-        border-radius: 8px !important; color: #c7d2fe !important;
-        font-size: 0.85rem !important;
+        background: rgba(99,102,241,0.15) !important;
+        border: 1px solid rgba(99,102,241,0.25) !important;
+        border-radius: 10px !important; color: #c7d2fe !important;
+        font-size: 0.95rem !important;
     }
 
     /* ═══ RADIO ═══ */
-    .stRadio > div { gap: 6px; }
+    .stRadio > div { gap: 8px; }
     .stRadio > div > label {
-        background: rgba(255,255,255,0.05) !important;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 10px; padding: 10px 20px;
-        font-size: 0.95rem; font-weight: 600;
+        background: rgba(255,255,255,0.04) !important;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px; padding: 12px 24px;
+        font-size: 1.05rem; font-weight: 700;
         color: #94a3b8;
     }
 
     /* ═══ CHECKBOX ═══ */
     .stCheckbox label { color: #94a3b8 !important; }
-    .stCheckbox label span { font-size: 1rem; }
+    .stCheckbox label span { font-size: 1.1rem; }
 
     /* ═══ EXPANDER ═══ */
     .streamlit-expanderHeader {
-        font-size: 0.95rem !important; font-weight: 600 !important;
+        font-size: 1.05rem !important; font-weight: 700 !important;
         color: #94a3b8 !important;
-        background: rgba(255,255,255,0.03) !important;
-        border-radius: 12px !important;
+        background: rgba(255,255,255,0.02) !important;
+        border-radius: 14px !important;
     }
     details[data-testid="stExpander"] {
-        border: 1px solid rgba(255,255,255,0.06) !important;
-        border-radius: 12px !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        border-radius: 14px !important;
         background: transparent !important;
     }
 
     /* ═══ SLIDER ═══ */
-    .stSlider label { color: #94a3b8 !important; font-size: 0.9rem !important; }
+    .stSlider label { color: #94a3b8 !important; font-size: 1rem !important; }
 
     /* ═══ DATAFRAME ═══ */
     .stDataFrame {
-        border-radius: 14px !important; overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px !important; overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.05);
     }
 
     /* ═══ PLOTLY ═══ */
-    .stPlotlyChart { border-radius: 14px; overflow: hidden; }
+    .stPlotlyChart { border-radius: 16px; overflow: hidden; }
 
     /* ═══ INFO/WARNING BOXES ═══ */
     .stAlert {
-        background: rgba(255,255,255,0.04) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 12px !important;
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        border-radius: 14px !important;
         color: #94a3b8 !important;
+        font-size: 1.05rem !important;
     }
 
     /* ═══ SPINNER ═══ */
@@ -290,28 +298,27 @@ st.markdown(
     /* ═══ SEPARATOR ═══ */
     .sep {
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-        margin: 0.8rem 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        margin: 1rem 0;
     }
 
     /* ═══ SECTION LABEL ═══ */
     .section-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.75rem; font-weight: 600;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.85rem; font-weight: 700;
         color: #6366f1; text-transform: uppercase;
-        letter-spacing: 2px; margin-bottom: 10px;
+        letter-spacing: 3px; margin-bottom: 12px;
     }
 
     /* ═══ FOOTER ═══ */
     .footer {
-        text-align: center; color: #4b5563; font-size: 0.75rem;
-        padding: 2rem 0 1rem; border-top: 1px solid rgba(255,255,255,0.04);
-        margin-top: 2rem;
+        text-align: center; color: #4b5563; font-size: 0.85rem;
+        padding: 2.5rem 0 1.2rem; border-top: 1px solid rgba(255,255,255,0.03);
+        margin-top: 2.5rem;
     }
     .footer a { color: #6366f1; text-decoration: none; }
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -392,7 +399,7 @@ CHART_COLORS = {
     "vol": "rgba(129,140,248,0.08)",
     "sma1": "#fbbf24",
     "sma2": "#f472b6",
-    "font": "'Space Grotesk', sans-serif",
+    "font": "'Courier New', Courier, monospace",
     "text": "#94a3b8",
 }
 
@@ -711,10 +718,11 @@ elif page == "Chart":
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    _dash = "\u2014"
     s1, s2, s3, s4 = st.columns(4)
-    s1.metric("52w High", f"{info.get('fiftyTwoWeekHigh', '\u2014')}")
-    s2.metric("52w Low", f"{info.get('fiftyTwoWeekLow', '\u2014')}")
-    s3.metric("P/E", f"{info.get('trailingPE', '\u2014')}")
+    s1.metric("52w High", f"{info.get('fiftyTwoWeekHigh', _dash)}")
+    s2.metric("52w Low", f"{info.get('fiftyTwoWeekLow', _dash)}")
+    s3.metric("P/E", f"{info.get('trailingPE', _dash)}")
     s4.metric("Avg Vol", f"{info.get('averageVolume', 0):,.0f}")
 
     st.markdown(
