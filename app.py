@@ -324,15 +324,18 @@ def fmt_cap(val):
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def fetch_stocks(tickers: tuple) -> pd.DataFrame:
+def fetch_stocks(tickers: tuple):
     rows = []
+    errors = []
     for t in tickers:
         try:
             info = yf.Ticker(t).info
             if not info:
+                errors.append(f"{t}: empty info")
                 continue
             price = info.get("currentPrice") or info.get("regularMarketPrice")
             if price is None:
+                errors.append(f"{t}: no price field")
                 continue
             prev = info.get("regularMarketPreviousClose") or info.get("previousClose")
             chg = round((price - prev) / prev * 100, 2) if price and prev else None
@@ -353,12 +356,12 @@ def fetch_stocks(tickers: tuple) -> pd.DataFrame:
                 "Beta": info.get("beta"),
             })
         except Exception as e:
-            st.toast(f"Error fetching {t}: {e}")
+            errors.append(f"{t}: {e}")
             continue
     df = pd.DataFrame(rows)
     if not df.empty:
         df["Market"] = df["Ticker"].apply(market_label)
-    return df
+    return df, errors
 
 
 CHART_COLORS = {
@@ -436,11 +439,16 @@ if page == "Dashboard":
         st.stop()
 
     with st.spinner(f"Loading {len(all_tickers)} stocks..."):
-        df = fetch_stocks(tuple(all_tickers))
+        df, fetch_errors = fetch_stocks(tuple(all_tickers))
 
     if df.empty:
+        if fetch_errors:
+            st.error("Errors:\n" + "\n".join(fetch_errors[:5]))
         st.warning("No data found. Check your tickers.")
         st.stop()
+    if fetch_errors:
+        with st.expander(f"{len(fetch_errors)} ticker(s) failed"):
+            st.code("\n".join(fetch_errors))
 
     f = df.copy()
     if pe_range != (0.0, 100.0):
@@ -523,7 +531,7 @@ elif page == "Compare":
         st.stop()
 
     with st.spinner("Loading..."):
-        cdf = fetch_stocks(tuple(pick))
+        cdf, _ = fetch_stocks(tuple(pick))
 
     if cdf.empty:
         st.warning("No data found. Check your tickers.")
