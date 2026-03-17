@@ -3,7 +3,6 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import altair as alt
 import plotly.graph_objects as go
 from stocks import MARKET_STOCKS, get_exchange_rates
 
@@ -452,34 +451,59 @@ with bottom_left:
 
 # ── Right panel: normalized chart ────────────────────────────────────────────
 
+PLOTLY_COLORS = [
+    "#818cf8", "#f472b6", "#fbbf24", "#34d399", "#a78bfa",
+    "#fb923c", "#38bdf8", "#f87171", "#4ade80", "#e879f9",
+]
+
+PLOTLY_LAYOUT = dict(
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter, -apple-system, sans-serif", size=12, color="#64748b"),
+    xaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+    yaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+    legend=dict(
+        orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+        font=dict(size=11, color="#94a3b8"),
+    ),
+    margin=dict(t=20, b=40, l=50, r=20),
+    hovermode="x unified",
+    hoverlabel=dict(
+        bgcolor="#1a1a2e", bordercolor="rgba(255,255,255,0.1)",
+        font=dict(size=12, color="#e2e8f0", family="JetBrains Mono"),
+    ),
+)
+
 with right_cell:
-    chart_df = normalized.reset_index().melt(
-        id_vars=["Date"], var_name="Stock", value_name="Normalized price"
+    fig = go.Figure()
+    for i, t in enumerate(tickers):
+        fig.add_trace(go.Scatter(
+            x=normalized.index, y=normalized[t],
+            mode="lines", name=t,
+            line=dict(color=PLOTLY_COLORS[i % len(PLOTLY_COLORS)], width=2.5),
+            hovertemplate="%{y:.3f}<extra>" + t + "</extra>",
+        ))
+    fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=420,
+        yaxis_title="Normalized price",
+        xaxis=dict(
+            **PLOTLY_LAYOUT["xaxis"],
+            rangeslider=dict(visible=True, thickness=0.04, bgcolor="rgba(255,255,255,0.02)"),
+            rangeselector=dict(
+                buttons=[
+                    dict(count=1, label="1M", step="month", stepmode="backward"),
+                    dict(count=3, label="3M", step="month", stepmode="backward"),
+                    dict(count=6, label="6M", step="month", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ],
+                bgcolor="rgba(255,255,255,0.05)",
+                activecolor="rgba(99,102,241,0.3)",
+                font=dict(color="#94a3b8", size=11),
+            ),
+        ),
     )
-
-    chart = (
-        alt.Chart(chart_df)
-        .mark_line(strokeWidth=2)
-        .encode(
-            alt.X("Date:T"),
-            alt.Y("Normalized price:Q").scale(zero=False),
-            alt.Color("Stock:N", scale=alt.Scale(scheme="category10")),
-            alt.Tooltip(["Date:T", "Stock:N", "Normalized price:Q"]),
-        )
-        .properties(height=420)
-        .configure_view(strokeWidth=0)
-        .configure_axis(
-            gridColor="rgba(255,255,255,0.03)",
-            labelColor="#64748b",
-            titleColor="#64748b",
-        )
-        .configure_legend(
-            labelColor="#94a3b8",
-            titleColor="#94a3b8",
-        )
-    )
-
-    st.altair_chart(chart, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": True, "scrollZoom": True})
 
 # ── Peer analysis section ────────────────────────────────────────────────────
 
@@ -491,6 +515,21 @@ st.markdown('<div class="section-label">Individual stocks vs peer average</div>'
 if len(tickers) <= 1:
     st.info("Pick 2 or more tickers to see peer comparisons.")
 else:
+    PEER_LAYOUT = dict(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, sans-serif", size=11, color="#64748b"),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.25, font=dict(size=10, color="#94a3b8")),
+        margin=dict(t=35, b=10, l=40, r=10),
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="#1a1a2e", bordercolor="rgba(255,255,255,0.1)",
+            font=dict(size=11, color="#e2e8f0", family="JetBrains Mono"),
+        ),
+    )
+
     NUM_COLS = 4
     grid_cols = st.columns(NUM_COLS)
 
@@ -498,72 +537,48 @@ else:
         peers = normalized.drop(columns=[ticker])
         peer_avg = peers.mean(axis=1)
 
-        # Stock vs peer average line chart
-        plot_data = pd.DataFrame({
-            "Date": normalized.index,
-            ticker: normalized[ticker],
-            "Peer average": peer_avg,
-        }).melt(id_vars=["Date"], var_name="Series", value_name="Price")
-
-        line_chart = (
-            alt.Chart(plot_data)
-            .mark_line(strokeWidth=2)
-            .encode(
-                alt.X("Date:T"),
-                alt.Y("Price:Q").scale(zero=False),
-                alt.Color(
-                    "Series:N",
-                    scale=alt.Scale(
-                        domain=[ticker, "Peer average"],
-                        range=["#818cf8", "#475569"],
-                    ),
-                    legend=alt.Legend(orient="bottom"),
-                ),
-                alt.Tooltip(["Date:T", "Series:N", "Price:Q"]),
-            )
-            .properties(title=f"{ticker} vs peer average", height=280)
-            .configure_view(strokeWidth=0)
-            .configure_axis(gridColor="rgba(255,255,255,0.03)", labelColor="#64748b", titleColor="#64748b")
-            .configure_legend(labelColor="#94a3b8", titleColor="#94a3b8")
-            .configure_title(color="#e2e8f0", fontSize=13, font="Inter")
+        # Stock vs peer average
+        fig_vs = go.Figure()
+        fig_vs.add_trace(go.Scatter(
+            x=normalized.index, y=normalized[ticker],
+            mode="lines", name=ticker,
+            line=dict(color="#818cf8", width=2.5),
+            hovertemplate="%{y:.3f}<extra>" + ticker + "</extra>",
+        ))
+        fig_vs.add_trace(go.Scatter(
+            x=normalized.index, y=peer_avg,
+            mode="lines", name="Peer avg",
+            line=dict(color="#475569", width=2, dash="dot"),
+            hovertemplate="%{y:.3f}<extra>Peer avg</extra>",
+        ))
+        fig_vs.update_layout(
+            **PEER_LAYOUT, height=280,
+            title=dict(text=f"{ticker} vs peer average", font=dict(size=13, color="#e2e8f0")),
         )
 
         cell = grid_cols[(i * 2) % NUM_COLS].container(border=True)
         cell.write("")
-        cell.altair_chart(line_chart, use_container_width=True)
+        cell.plotly_chart(fig_vs, use_container_width=True, config={"displayModeBar": False})
 
         # Delta area chart
-        delta_data = pd.DataFrame({
-            "Date": normalized.index,
-            "Delta": normalized[ticker] - peer_avg,
-        })
-
-        area_chart = (
-            alt.Chart(delta_data)
-            .mark_area(
-                line={"color": "#818cf8", "strokeWidth": 1.5},
-                color=alt.Gradient(
-                    gradient="linear",
-                    stops=[
-                        alt.GradientStop(color="rgba(129,140,248,0.3)", offset=0),
-                        alt.GradientStop(color="rgba(129,140,248,0.02)", offset=1),
-                    ],
-                    x1=1, x2=1, y1=1, y2=0,
-                ),
-            )
-            .encode(
-                alt.X("Date:T"),
-                alt.Y("Delta:Q").scale(zero=False),
-            )
-            .properties(title=f"{ticker} minus peer average", height=280)
-            .configure_view(strokeWidth=0)
-            .configure_axis(gridColor="rgba(255,255,255,0.03)", labelColor="#64748b", titleColor="#64748b")
-            .configure_title(color="#e2e8f0", fontSize=13, font="Inter")
+        delta = normalized[ticker] - peer_avg
+        fig_delta = go.Figure()
+        fig_delta.add_trace(go.Scatter(
+            x=normalized.index, y=delta,
+            mode="lines", name="Delta",
+            line=dict(color="#818cf8", width=1.5),
+            fill="tozeroy",
+            fillcolor="rgba(129,140,248,0.12)",
+            hovertemplate="%{y:.3f}<extra>Delta</extra>",
+        ))
+        fig_delta.update_layout(
+            **PEER_LAYOUT, height=280, showlegend=False,
+            title=dict(text=f"{ticker} minus peer avg", font=dict(size=13, color="#e2e8f0")),
         )
 
         cell = grid_cols[(i * 2 + 1) % NUM_COLS].container(border=True)
         cell.write("")
-        cell.altair_chart(area_chart, use_container_width=True)
+        cell.plotly_chart(fig_delta, use_container_width=True, config={"displayModeBar": False})
 
 # ── Stock detail cards ───────────────────────────────────────────────────────
 
