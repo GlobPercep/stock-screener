@@ -309,10 +309,26 @@ def fetch_stock_info(tickers: tuple):
     rows = []
     for t in tickers:
         try:
-            info = yf.Ticker(t).info
-            if not info:
-                continue
+            tk = yf.Ticker(t)
+            try:
+                info = tk.info
+            except Exception:
+                info = {}
+            if not info or not isinstance(info, dict):
+                # Fallback: try to get price from history
+                hist = tk.history(period="5d")
+                if hist.empty:
+                    continue
+                info = {"currentPrice": float(hist["Close"].iloc[-1]), "shortName": t}
             price = info.get("currentPrice") or info.get("regularMarketPrice")
+            if price is None:
+                # Try history fallback
+                try:
+                    hist = tk.history(period="5d")
+                    if not hist.empty:
+                        price = float(hist["Close"].iloc[-1])
+                except Exception:
+                    pass
             if price is None:
                 continue
             prev = info.get("regularMarketPreviousClose") or info.get("previousClose")
@@ -556,6 +572,9 @@ st.markdown('<div class="section-label">Fundamental Metrics</div>', unsafe_allow
 
 with st.spinner("Loading fundamentals..."):
     info_df = fetch_stock_info(tuple(tickers))
+
+if info_df.empty:
+    st.warning("Could not load fundamental data. Yahoo Finance may be rate-limiting requests. Try refreshing in a minute.")
 
 if not info_df.empty:
     rates = get_exchange_rates()
