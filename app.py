@@ -483,12 +483,14 @@ with right_cell:
             line=dict(color=PLOTLY_COLORS[i % len(PLOTLY_COLORS)], width=2.5),
             hovertemplate="%{y:.3f}<extra>" + t + "</extra>",
         ))
+    main_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k != "xaxis"}
     fig.update_layout(
-        **PLOTLY_LAYOUT,
+        **main_layout,
         height=420,
         yaxis_title="Normalized price",
         xaxis=dict(
-            **PLOTLY_LAYOUT["xaxis"],
+            gridcolor="rgba(255,255,255,0.03)",
+            linecolor="rgba(255,255,255,0.06)",
             rangeslider=dict(visible=True, thickness=0.04, bgcolor="rgba(255,255,255,0.02)"),
             rangeselector=dict(
                 buttons=[
