@@ -280,11 +280,28 @@ if "tickers_input" not in st.session_state:
 @st.cache_resource(show_spinner=False, ttl=21600)
 def load_history(tickers_str, period):
     """Fetch historical close prices for multiple tickers."""
-    tickers_obj = yf.Tickers(tickers_str)
-    data = tickers_obj.history(period=period)
+    try:
+        tickers_obj = yf.Tickers(tickers_str)
+        data = tickers_obj.history(period=period)
+    except Exception:
+        return None
     if data is None or data.empty:
         return None
-    return data["Close"]
+    # Handle MultiIndex columns from yfinance
+    if isinstance(data.columns, pd.MultiIndex):
+        if "Close" in data.columns.get_level_values(0):
+            data = data["Close"]
+        else:
+            return None
+    elif "Close" in data.columns:
+        data = data[["Close"]]
+    # Flatten column index if needed
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = data.columns.get_level_values(-1)
+    # Drop rows where ALL values are NaN, then forward-fill gaps
+    data = data.dropna(how="all")
+    data = data.ffill()
+    return data
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -369,12 +386,28 @@ if data is None or data.empty:
 if isinstance(data, pd.Series):
     data = data.to_frame(name=tickers[0])
 
-# Drop tickers with all NaN
-empty_cols = data.columns[data.isna().all()].tolist()
+# Ensure columns are strings
+data.columns = [str(c) for c in data.columns]
+
+# Match tickers to actual column names (case-insensitive)
+col_map = {c.upper(): c for c in data.columns}
+matched_tickers = []
+for t in tickers:
+    if t in data.columns:
+        matched_tickers.append(t)
+    elif t.upper() in col_map:
+        data = data.rename(columns={col_map[t.upper()]: t})
+        matched_tickers.append(t)
+
+# Drop columns with all NaN
+empty_cols = [c for c in matched_tickers if data[c].isna().all()]
 if empty_cols:
     st.error(f"No data for: {', '.join(empty_cols)}")
-    data = data.drop(columns=empty_cols)
-    tickers = [t for t in tickers if t not in empty_cols]
+    matched_tickers = [t for t in matched_tickers if t not in empty_cols]
+
+# Keep only matched columns
+data = data[[c for c in matched_tickers if c in data.columns]]
+tickers = [t for t in matched_tickers if t in data.columns]
 
 if data.empty or not tickers:
     st.warning("No valid data remaining.")
@@ -382,9 +415,23 @@ if data.empty or not tickers:
 
 # ── Normalize prices ─────────────────────────────────────────────────────────
 
-normalized = data.div(data.iloc[0])
+# Use first non-NaN value per column for normalization
+first_valid = data.apply(lambda col: col.dropna().iloc[0] if col.dropna().any() else 1.0)
+normalized = data.div(first_valid)
 
-latest = {normalized[t].iat[-1]: t for t in tickers}
+# Build latest values safely
+latest = {}
+for t in tickers:
+    try:
+        val = normalized[t].dropna().iloc[-1]
+        latest[val] = t
+    except (IndexError, KeyError):
+        continue
+
+if not latest:
+    st.warning("Could not normalize data.")
+    st.stop()
+
 best_val, best_ticker = max(latest.items())
 worst_val, worst_ticker = min(latest.items())
 
