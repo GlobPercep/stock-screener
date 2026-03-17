@@ -305,7 +305,7 @@ def load_history(tickers_str, period):
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_stock_info(tickers: tuple):
-    """Fetch current info for stock cards."""
+    """Fetch current info + fundamental metrics for stock cards."""
     rows = []
     for t in tickers:
         try:
@@ -317,20 +317,60 @@ def fetch_stock_info(tickers: tuple):
                 continue
             prev = info.get("regularMarketPreviousClose") or info.get("previousClose")
             chg = round((price - prev) / prev * 100, 2) if price and prev else None
+
+            # Fundamentals
+            pe = info.get("trailingPE")
+            fwd_pe = info.get("forwardPE")
+            peg = info.get("pegRatio")
+            pb = info.get("priceToBook")
+            ps = info.get("priceToSalesTrailing12Months")
+            ev_ebitda = info.get("enterpriseToEbitda")
+            ev_rev = info.get("enterpriseToRevenue")
+            roe = info.get("returnOnEquity")
+            roa = info.get("returnOnAssets")
+            profit_margin = info.get("profitMargins")
+            debt_equity = info.get("debtToEquity")
+            fcf = info.get("freeCashflow")
+            mkt_cap = info.get("marketCap")
+            eps = info.get("trailingEps")
+            fwd_eps = info.get("forwardEps")
+
+            # Simple fair value estimate: avg of PE-based and Fwd PE-based
+            fair_value = None
+            estimates = []
+            if fwd_eps and fwd_pe and fwd_eps > 0:
+                # Sector median PE approach (use 15 as market avg fallback)
+                estimates.append(fwd_eps * 15)
+            if eps and pe and eps > 0:
+                estimates.append(eps * 15)
+            if estimates:
+                fair_value = round(sum(estimates) / len(estimates), 2)
+
             rows.append({
                 "Ticker": t,
                 "Name": info.get("shortName", t),
                 "Currency": info.get("currency", ""),
                 "Price": price,
                 "Change %": chg,
-                "Market Cap": info.get("marketCap"),
-                "P/E": info.get("trailingPE"),
-                "Fwd P/E": info.get("forwardPE"),
-                "P/B": info.get("priceToBook"),
+                "Market Cap": mkt_cap,
+                "P/E": pe,
+                "Fwd P/E": fwd_pe,
+                "PEG": peg,
+                "P/B": pb,
+                "P/S": ps,
+                "EV/EBITDA": ev_ebitda,
+                "EV/Revenue": ev_rev,
+                "ROE %": round(roe * 100, 2) if roe else None,
+                "ROA %": round(roa * 100, 2) if roa else None,
+                "Profit Margin %": round(profit_margin * 100, 2) if profit_margin else None,
+                "Debt/Equity": debt_equity,
                 "Yield %": round(info.get("dividendYield", 0) * 100, 2) if info.get("dividendYield") else None,
                 "52w High": info.get("fiftyTwoWeekHigh"),
                 "52w Low": info.get("fiftyTwoWeekLow"),
                 "Beta": info.get("beta"),
+                "EPS": eps,
+                "Fwd EPS": fwd_eps,
+                "Fair Value": fair_value,
             })
         except Exception:
             continue
@@ -507,100 +547,38 @@ with right_cell:
     )
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": True, "scrollZoom": True})
 
-# ── Peer analysis section ────────────────────────────────────────────────────
+# ── Fundamental metrics section ───────────────────────────────────────────────
 
 ""
 ""
 
-st.markdown('<div class="section-label">Individual stocks vs peer average</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">Fundamental Metrics</div>', unsafe_allow_html=True)
 
-if len(tickers) <= 1:
-    st.info("Pick 2 or more tickers to see peer comparisons.")
-else:
-    PEER_LAYOUT = dict(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", size=11, color="#64748b"),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25, font=dict(size=10, color="#94a3b8")),
-        margin=dict(t=35, b=10, l=40, r=10),
-        hovermode="x unified",
-        hoverlabel=dict(
-            bgcolor="#1a1a2e", bordercolor="rgba(255,255,255,0.1)",
-            font=dict(size=11, color="#e2e8f0", family="JetBrains Mono"),
-        ),
-    )
-
-    NUM_COLS = 4
-    grid_cols = st.columns(NUM_COLS)
-
-    for i, ticker in enumerate(tickers):
-        peers = normalized.drop(columns=[ticker])
-        peer_avg = peers.mean(axis=1)
-
-        # Stock vs peer average
-        fig_vs = go.Figure()
-        fig_vs.add_trace(go.Scatter(
-            x=normalized.index, y=normalized[ticker],
-            mode="lines", name=ticker,
-            line=dict(color="#818cf8", width=2.5),
-            hovertemplate="%{y:.3f}<extra>" + ticker + "</extra>",
-        ))
-        fig_vs.add_trace(go.Scatter(
-            x=normalized.index, y=peer_avg,
-            mode="lines", name="Peer avg",
-            line=dict(color="#475569", width=2, dash="dot"),
-            hovertemplate="%{y:.3f}<extra>Peer avg</extra>",
-        ))
-        fig_vs.update_layout(
-            **PEER_LAYOUT, height=280,
-            title=dict(text=f"{ticker} vs peer average", font=dict(size=13, color="#e2e8f0")),
-        )
-
-        cell = grid_cols[(i * 2) % NUM_COLS].container(border=True)
-        cell.write("")
-        cell.plotly_chart(fig_vs, use_container_width=True, config={"displayModeBar": False})
-
-        # Delta area chart
-        delta = normalized[ticker] - peer_avg
-        fig_delta = go.Figure()
-        fig_delta.add_trace(go.Scatter(
-            x=normalized.index, y=delta,
-            mode="lines", name="Delta",
-            line=dict(color="#818cf8", width=1.5),
-            fill="tozeroy",
-            fillcolor="rgba(129,140,248,0.12)",
-            hovertemplate="%{y:.3f}<extra>Delta</extra>",
-        ))
-        fig_delta.update_layout(
-            **PEER_LAYOUT, height=280, showlegend=False,
-            title=dict(text=f"{ticker} minus peer avg", font=dict(size=13, color="#e2e8f0")),
-        )
-
-        cell = grid_cols[(i * 2 + 1) % NUM_COLS].container(border=True)
-        cell.write("")
-        cell.plotly_chart(fig_delta, use_container_width=True, config={"displayModeBar": False})
-
-# ── Stock detail cards ───────────────────────────────────────────────────────
-
-""
-""
-
-st.markdown('<div class="section-label">Stock Details</div>', unsafe_allow_html=True)
-
-with st.spinner("Loading stock details..."):
+with st.spinner("Loading fundamentals..."):
     info_df = fetch_stock_info(tuple(tickers))
 
 if not info_df.empty:
     rates = get_exchange_rates()
 
+    # ── Stock cards row ──
     card_cols = st.columns(min(len(info_df), 5))
     for i, (_, row) in enumerate(info_df.iterrows()):
         rate = rates.get(row["Currency"], 1.0)
         chg = row["Change %"]
         arrow = "+" if chg and chg > 0 else ""
         chg_class = "change-up" if chg and chg > 0 else "change-down"
+        fv = row.get("Fair Value")
+        fv_html = ""
+        if fv and row["Price"]:
+            upside = round((fv / row["Price"] - 1) * 100, 1)
+            fv_color = "#4ade80" if upside >= 0 else "#f87171"
+            fv_html = (
+                f'<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">'
+                f'<span style="color:#475569;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">Fair Value</span>'
+                f'<div style="font-family:JetBrains Mono,monospace;font-size:1.1rem;font-weight:700;color:#e2e8f0;">'
+                f'${fv:.2f} <span style="font-size:0.8rem;color:{fv_color};">({arrow}{upside:.1f}%)</span></div>'
+                f'</div>'
+            )
         with card_cols[i % 5]:
             st.markdown(
                 f'<div class="stock-card">'
@@ -608,26 +586,140 @@ if not info_df.empty:
                 f'<div class="name">{row["Name"]}</div>'
                 f'<div class="price">${row["Price"] * rate:.2f}</div>'
                 f'<div class="change {chg_class}">{arrow}{chg:.2f}%</div>'
+                f'{fv_html}'
                 f"</div>",
                 unsafe_allow_html=True,
             )
 
     ""
 
-    with st.expander("Detailed metrics"):
+    # ── Valuation charts (2x2 grid) ──
+    BAR_LAYOUT = dict(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, sans-serif", size=11, color="#64748b"),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.03)", linecolor="rgba(255,255,255,0.06)"),
+        margin=dict(t=40, b=20, l=50, r=20),
+        hoverlabel=dict(
+            bgcolor="#1a1a2e", bordercolor="rgba(255,255,255,0.1)",
+            font=dict(size=12, color="#e2e8f0", family="JetBrains Mono"),
+        ),
+    )
+
+    METRIC_CHARTS = [
+        ("P/E", "P/E Ratio (Trailing)", "Lower may indicate better value"),
+        ("Fwd P/E", "Forward P/E", "Expected earnings multiple"),
+        ("PEG", "PEG Ratio", "P/E relative to growth. < 1 = undervalued"),
+        ("EV/EBITDA", "EV / EBITDA", "Enterprise value vs cash earnings"),
+        ("P/B", "Price / Book", "Price relative to net assets"),
+        ("P/S", "Price / Sales", "Revenue-based valuation"),
+        ("ROE %", "Return on Equity %", "Profitability vs shareholder equity"),
+        ("Profit Margin %", "Profit Margin %", "Net income as % of revenue"),
+    ]
+
+    for row_start in range(0, len(METRIC_CHARTS), 4):
+        chart_row = METRIC_CHARTS[row_start:row_start + 4]
+        chart_cols = st.columns(len(chart_row))
+
+        for col_idx, (metric_key, title, subtitle) in enumerate(chart_row):
+            chart_data = info_df[["Ticker", metric_key]].dropna(subset=[metric_key])
+            if chart_data.empty:
+                chart_cols[col_idx].caption(f"{title}: No data")
+                continue
+
+            colors = [PLOTLY_COLORS[tickers.index(t) % len(PLOTLY_COLORS)] if t in tickers else "#818cf8"
+                      for t in chart_data["Ticker"]]
+
+            fig_bar = go.Figure(go.Bar(
+                x=chart_data["Ticker"],
+                y=chart_data[metric_key],
+                text=chart_data[metric_key].round(2),
+                textposition="outside",
+                textfont=dict(size=12, color="#94a3b8", family="JetBrains Mono"),
+                marker_color=colors,
+                marker_cornerradius=6,
+                hovertemplate="%{x}: %{y:.2f}<extra></extra>",
+            ))
+
+            # Add peer average line
+            avg_val = chart_data[metric_key].mean()
+            fig_bar.add_hline(
+                y=avg_val, line_dash="dot", line_color="#475569", line_width=1.5,
+                annotation_text=f"Avg: {avg_val:.1f}",
+                annotation_position="top right",
+                annotation_font=dict(size=10, color="#64748b"),
+            )
+
+            fig_bar.update_layout(
+                **BAR_LAYOUT, height=320, showlegend=False,
+                title=dict(
+                    text=f"{title}<br><span style='font-size:10px;color:#475569'>{subtitle}</span>",
+                    font=dict(size=13, color="#e2e8f0"),
+                ),
+            )
+
+            with chart_cols[col_idx]:
+                st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
+
+    ""
+
+    # ── Fair Value vs Price chart ──
+    fv_data = info_df[["Ticker", "Price", "Fair Value"]].dropna(subset=["Fair Value"])
+    if not fv_data.empty:
+        st.markdown('<div class="section-label">Fair Value vs Current Price</div>', unsafe_allow_html=True)
+
+        fig_fv = go.Figure()
+        fig_fv.add_trace(go.Bar(
+            x=fv_data["Ticker"], y=fv_data["Price"],
+            name="Current Price",
+            marker_color="#818cf8", marker_cornerradius=6,
+            text=fv_data["Price"].round(2), textposition="outside",
+            textfont=dict(size=11, color="#818cf8", family="JetBrains Mono"),
+            hovertemplate="%{x}: $%{y:.2f}<extra>Price</extra>",
+        ))
+        fig_fv.add_trace(go.Bar(
+            x=fv_data["Ticker"], y=fv_data["Fair Value"],
+            name="Fair Value (15x EPS)",
+            marker_color="#4ade80", marker_cornerradius=6, marker_opacity=0.7,
+            text=fv_data["Fair Value"].round(2), textposition="outside",
+            textfont=dict(size=11, color="#4ade80", family="JetBrains Mono"),
+            hovertemplate="%{x}: $%{y:.2f}<extra>Fair Value</extra>",
+        ))
+        fig_fv.update_layout(
+            **BAR_LAYOUT, height=380, barmode="group",
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02,
+                font=dict(size=11, color="#94a3b8"),
+            ),
+        )
+        st.plotly_chart(fig_fv, use_container_width=True, config={"displayModeBar": False})
+
+    ""
+
+    # ── Full metrics table ──
+    with st.expander("All fundamental data"):
+        _dash = "\u2014"
         detail_rows = []
         for _, row in info_df.iterrows():
             rate = rates.get(row["Currency"], 1.0)
-            _dash = "\u2014"
             detail_rows.append({
                 "Ticker": row["Ticker"],
-                "Name": row["Name"],
-                "USD Price": f"${row['Price'] * rate:.2f}" if row["Price"] else _dash,
+                "Price": f"${row['Price'] * rate:.2f}" if row["Price"] else _dash,
+                "Fair Value": f"${row['Fair Value']:.2f}" if pd.notna(row.get("Fair Value")) else _dash,
                 "P/E": f"{row['P/E']:.1f}" if pd.notna(row["P/E"]) else _dash,
                 "Fwd P/E": f"{row['Fwd P/E']:.1f}" if pd.notna(row["Fwd P/E"]) else _dash,
+                "PEG": f"{row['PEG']:.2f}" if pd.notna(row.get("PEG")) else _dash,
                 "P/B": f"{row['P/B']:.2f}" if pd.notna(row["P/B"]) else _dash,
-                "Yield": f"{row['Yield %']:.2f}%" if pd.notna(row["Yield %"]) else _dash,
-                "Beta": f"{row['Beta']:.2f}" if pd.notna(row["Beta"]) else _dash,
+                "P/S": f"{row['P/S']:.2f}" if pd.notna(row.get("P/S")) else _dash,
+                "EV/EBITDA": f"{row['EV/EBITDA']:.1f}" if pd.notna(row.get("EV/EBITDA")) else _dash,
+                "EV/Rev": f"{row['EV/Revenue']:.2f}" if pd.notna(row.get("EV/Revenue")) else _dash,
+                "ROE %": f"{row['ROE %']:.1f}" if pd.notna(row.get("ROE %")) else _dash,
+                "ROA %": f"{row['ROA %']:.1f}" if pd.notna(row.get("ROA %")) else _dash,
+                "Margin %": f"{row['Profit Margin %']:.1f}" if pd.notna(row.get("Profit Margin %")) else _dash,
+                "D/E": f"{row['Debt/Equity']:.0f}" if pd.notna(row.get("Debt/Equity")) else _dash,
+                "Yield %": f"{row['Yield %']:.2f}" if pd.notna(row.get("Yield %")) else _dash,
+                "Beta": f"{row['Beta']:.2f}" if pd.notna(row.get("Beta")) else _dash,
             })
         st.dataframe(pd.DataFrame(detail_rows), use_container_width=True, hide_index=True)
 
